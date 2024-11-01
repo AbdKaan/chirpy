@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 )
@@ -24,6 +25,34 @@ func (cfg *apiConfig) handlerMetrics(w http.ResponseWriter, r *http.Request) {
 	</html>`, cfg.fileserverHits.Load())
 
 	w.Write([]byte(htmlContent))
+}
+
+func handlerValidateChirp(w http.ResponseWriter, r *http.Request) {
+	type parameters struct {
+		Body string `json:"body"`
+	}
+
+	type response struct {
+		Cleaned_body string `json:"cleaned_body"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	params := parameters{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
+		return
+	}
+
+	const maxChirpLength = 140
+	if len(params.Body) > maxChirpLength {
+		respondWithError(w, http.StatusBadRequest, "Chirp is too long", nil)
+		return
+	}	
+
+	respondWithJSON(w, http.StatusOK, response{
+		Cleaned_body: cencorProfane(params.Body),
+	})
 }
 
 func (cfg *apiConfig) handlerResetConfig(w http.ResponseWriter, r *http.Request) {

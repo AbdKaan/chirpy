@@ -24,6 +24,7 @@ func main() {
 	handler.Handle("/app/", fsHandler)
 
 	handler.HandleFunc("GET /api/healthz", handlerReadiness)
+	handler.HandleFunc("POST /api/validate_chirp", handlerValidateChirp)
 
 	handler.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
 	handler.HandleFunc("POST /admin/reset", apiCfg.handlerResetConfig)
