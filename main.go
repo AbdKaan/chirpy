@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"os"
 	"sync/atomic"
+	"time"
 
 	"github.com/AbdKaan/chirpy/internal/database"
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
@@ -15,6 +17,22 @@ import (
 type apiConfig struct {
 	fileserverHits atomic.Int32
 	db             *database.Queries
+	platform       string
+}
+
+type User struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Email     string    `json:"email"`
+}
+
+type Post struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Body      string    `json:"body"`
+	User_ID   string    `json:"user_id"`
 }
 
 func main() {
@@ -34,9 +52,12 @@ func main() {
 
 	dbQueries := database.New(dbConn)
 
+	platform := os.Getenv("PLATFORM")
+
 	apiCfg := apiConfig{
 		fileserverHits: atomic.Int32{},
 		db:             dbQueries,
+		platform:       platform,
 	}
 
 	handler := http.NewServeMux()
@@ -45,10 +66,13 @@ func main() {
 	handler.Handle("/app/", fsHandler)
 
 	handler.HandleFunc("GET /api/healthz", handlerReadiness)
-	handler.HandleFunc("POST /api/validate_chirp", handlerValidateChirp)
+	handler.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
+	handler.HandleFunc("GET /api/chirps", apiCfg.handlerGetPosts)
+	handler.HandleFunc("POST /api/chirps", apiCfg.handlerCreatePost)
+	handler.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.handlerGetPost)
 
 	handler.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
-	handler.HandleFunc("POST /admin/reset", apiCfg.handlerResetConfig)
+	handler.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
 
 	server := &http.Server{
 		Addr:    ":" + port,
