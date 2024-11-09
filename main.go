@@ -70,6 +70,7 @@ func main() {
 	handler.HandleFunc("GET /api/chirps", apiCfg.handlerGetPosts)
 	handler.HandleFunc("POST /api/chirps", apiCfg.handlerCreatePost)
 	handler.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.handlerGetPost)
+	handler.HandleFunc("POST /api/login", apiCfg.handlerLogin)
 
 	handler.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
 	handler.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
