@@ -90,3 +90,18 @@ func MakeRefreshToken() (string, error) {
 
 	return hex.EncodeToString(token), nil
 }
+
+func GetAPIKey(headers http.Header) (string, error) {
+	headerAuth := headers.Get("Authorization")
+	if len(headerAuth) <= 7 {
+		err := fmt.Errorf("authorization header format is wrong. Authorization header: %v", headerAuth)
+		return "", err
+	} 
+
+	if headerAuth[:7] != "ApiKey " {
+		err := fmt.Errorf("authorization header format is wrong. Authorization header: %v", headerAuth)
+		return "", err
+	}
+
+	return headerAuth[7:], nil
+}

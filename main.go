@@ -19,13 +19,15 @@ type apiConfig struct {
 	db             *database.Queries
 	platform       string
 	secret         string
+	polkaKey       string
 }
 
 type User struct {
-	ID        uuid.UUID `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Email     string    `json:"email"`
+	ID          uuid.UUID `json:"id"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	Email       string    `json:"email"`
+	IsChirpyRed bool      `json:"is_chirpy_red"`
 }
 
 type Post struct {
@@ -57,11 +59,14 @@ func main() {
 
 	secret := os.Getenv("SECRET")
 
+	polkaKey := os.Getenv("POLKA_KEY")
+
 	apiCfg := apiConfig{
 		fileserverHits: atomic.Int32{},
 		db:             dbQueries,
 		platform:       platform,
 		secret:         secret,
+		polkaKey:       polkaKey,
 	}
 
 	handler := http.NewServeMux()
@@ -85,6 +90,9 @@ func main() {
 
 	handler.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
 	handler.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
+
+	// webhooks
+	handler.HandleFunc("POST /api/polka/webhooks", apiCfg.handlerUpgradeRedChirpy)
 
 	server := &http.Server{
 		Addr:    ":" + port,
