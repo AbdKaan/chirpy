@@ -18,6 +18,7 @@ type apiConfig struct {
 	fileserverHits atomic.Int32
 	db             *database.Queries
 	platform       string
+	secret         string
 }
 
 type User struct {
@@ -54,10 +55,13 @@ func main() {
 
 	platform := os.Getenv("PLATFORM")
 
+	secret := os.Getenv("SECRET")
+
 	apiCfg := apiConfig{
 		fileserverHits: atomic.Int32{},
 		db:             dbQueries,
 		platform:       platform,
+		secret:         secret,
 	}
 
 	handler := http.NewServeMux()
@@ -66,11 +70,18 @@ func main() {
 	handler.Handle("/app/", fsHandler)
 
 	handler.HandleFunc("GET /api/healthz", handlerReadiness)
-	handler.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
+
 	handler.HandleFunc("GET /api/chirps", apiCfg.handlerGetPosts)
 	handler.HandleFunc("POST /api/chirps", apiCfg.handlerCreatePost)
+	handler.HandleFunc("DELETE /api/chirps/{chirpID}", apiCfg.handlerDeletePost)
 	handler.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.handlerGetPost)
+
+	handler.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
+	handler.HandleFunc("PUT /api/users", apiCfg.handlerUpdateEmailAndPassword)
+
 	handler.HandleFunc("POST /api/login", apiCfg.handlerLogin)
+	handler.HandleFunc("POST /api/refresh", apiCfg.handlerRefreshToken)
+	handler.HandleFunc("POST /api/revoke", apiCfg.handlerRevokeToken)
 
 	handler.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
 	handler.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
