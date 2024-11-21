@@ -71,7 +71,7 @@ func GetBearerToken(headers http.Header) (string, error) {
 	if len(headerAuth) <= 7 {
 		err := fmt.Errorf("authorization header format is wrong. Authorization header: %v", headerAuth)
 		return "", err
-	} 
+	}
 
 	if headerAuth[:7] != "Bearer " {
 		err := fmt.Errorf("authorization header format is wrong. Authorization header: %v", headerAuth)
@@ -96,7 +96,7 @@ func GetAPIKey(headers http.Header) (string, error) {
 	if len(headerAuth) <= 7 {
 		err := fmt.Errorf("authorization header format is wrong. Authorization header: %v", headerAuth)
 		return "", err
-	} 
+	}
 
 	if headerAuth[:7] != "ApiKey " {
 		err := fmt.Errorf("authorization header format is wrong. Authorization header: %v", headerAuth)

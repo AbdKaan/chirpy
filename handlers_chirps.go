@@ -83,10 +83,29 @@ func (cfg *apiConfig) handlerGetPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cfg *apiConfig) handlerGetPosts(w http.ResponseWriter, r *http.Request) {
-	posts, err := cfg.db.GetPosts(r.Context())
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Couldn't get posts", err)
-		return
+	authorID := r.URL.Query().Get("author_id")
+	orderBy := r.URL.Query().Get("sort")
+
+	var posts []database.Post
+	var err error
+	if authorID != "" {
+		authorIDuuid, err := uuid.Parse(authorID)
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "Couldn't parse author ID", err)
+			return
+		}
+
+		posts, err = cfg.db.GetPostsOfAuthor(r.Context(), authorIDuuid)
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "Couldn't get posts", err)
+			return
+		}
+	} else {
+		posts, err = cfg.db.GetPosts(r.Context())
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "Couldn't get posts", err)
+			return
+		}
 	}
 
 	var postsArr []Post
@@ -98,6 +117,13 @@ func (cfg *apiConfig) handlerGetPosts(w http.ResponseWriter, r *http.Request) {
 			Body:      cencorProfane(post.Body),
 			User_ID:   post.UserID.String(),
 		})
+	}
+
+	if orderBy == "desc" {
+		// reverse the array so it will be ordered by descending
+		for i, j := 0, len(postsArr)-1; i < j; i, j = i+1, j-1 {
+			postsArr[i], postsArr[j] = postsArr[j], postsArr[i]
+		}
 	}
 
 	respondWithJSON(w, http.StatusOK, postsArr)
